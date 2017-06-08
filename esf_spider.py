@@ -3,7 +3,7 @@
 '''
  @Time    : 24/5/2017 10:16 PM
  @Author  : Qiang,Q
- @File    : LianjiaData_Spider.py
+ @File    : esf_spider.py
  @Software: PyCharm Community Edition
 '''
 
@@ -16,6 +16,7 @@ def getPageUrl(base_url):
     html=urlopen(base_url)
     bsobg = BS(html.read(),"lxml")
     print(base_url)
+    parseHtml(base_url)
     try:
         page_div=bsobg.find("div",class_='page-box house-lst-page-box')
         page_totalcount= eval(page_div['page-data'])['totalPage']
@@ -80,9 +81,6 @@ def main():
 
     for url in base_url_list:
         getPageUrl(url)
-    #getData(ROOT_URL)
-    #parseHtml(ROOT_URL)
-
 
 
 if __name__=='__main__':
