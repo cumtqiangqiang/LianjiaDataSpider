@@ -27,8 +27,10 @@ def getPageUrl(base_url):
                 print(url)
                 parseHtml(url)
             parseHtml(base_url)
-    except:
-        print('parse page count error or this page has only one!!')
+    except AttributeError as  e:
+        print(e)
+    except Exception as  e:
+        print(e)
 
 
 
@@ -69,19 +71,19 @@ def parseHtml(page_url):
     except:
         print('craw faild')
     finally:
-        output.json_output()
+        output.json_output('ershoufang')
         #output.csv_output()
 
 
 
 def main():
-
-    urls=url_manager.UrlManager()
-    base_url_list=urls.get_url('ershoufang')
-
-    for url in base_url_list:
-        getPageUrl(url)
-
+    #
+    # urls=url_manager.UrlManager()
+    # base_url_list=urls.get_url('ershoufang')
+    #
+    # for url in base_url_list:
+    #     getPageUrl(url)
+    getPageUrl('https://bj.lianjia.com/ershoufang/pinggu/')
 
 if __name__=='__main__':
     main()

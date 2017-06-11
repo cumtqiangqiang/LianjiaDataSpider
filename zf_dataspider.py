@@ -8,6 +8,7 @@
 '''
 from urllib.request import urlopen
 from  urllib.request import  Request
+from urllib import error
 from bs4 import BeautifulSoup as BS
 from bs4 import element
 from output import Outputer
@@ -35,9 +36,12 @@ user_agent=[{'User-Agent':'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.
 
 
 def getPageUrl(base_url):
-    html = urlopen(base_url)
+
+
+    req = Request(base_url, headers=random.choice(user_agent))
+    html = urlopen(req, timeout=10)
     bsobg = BS(html.read(), "lxml")
-    print(base_url)
+
     try:
         page_div = bsobg.find("div", class_='page-box house-lst-page-box')
         page_totalcount = eval(page_div['page-data'])['totalPage']
@@ -47,8 +51,10 @@ def getPageUrl(base_url):
                 url = base_url + 'pg%d' % page
                 print(url)
                 #parseHtml(url)
-            #parseHtml(base_url)
-    except:
+            else:
+                print(base_url)
+                #parseHtml(base_url)
+    except AttributeError :
         print('parse page count error or this page has only one!!')
 
 
@@ -76,7 +82,7 @@ def parseHtml(page_url):
                     #print(info.contents)
                     for info_detail in info.contents:
                         if(isinstance(info_detail,element.NavigableString)):
-                            #print(info_detail)
+
                             info_cont = '%s | %s' % (info_cont, info.get_text())
 
                 info_cont = info_cont.replace('|', '', 1)
@@ -95,25 +101,28 @@ def parseHtml(page_url):
                 data['total_price'] = price_tag.get_text()
                 data['update_time']=updated_tag.get_text()
                 output.collect_data(data)
+            print(page_url + ':craw success!!')
         else:
-            print('this page is no data')
-    except:
-        print('craw faild!!')
+            print(page_url + ':this page is no data')
+    except(error.HTTPError,error.URLError) as  e:
+        print(e)
+        output.error_log_output(url=page_url)
+    except Exception as e:
+        print(e)
+        output.error_log_output(url=page_url)
     finally:
-        output.json_output()
-        print(page_url+' craw success!!')
+        output.json_output('zufang')
 
 
 
 
 def main():
-    # urls = url_manager.UrlManager()
-    # base_url_list = urls.get_url('zufang')
-    #
-    # for url in base_url_list:
-    #     getPageUrl(url)
+    urls = url_manager.UrlManager()
+    base_url_list = urls.get_url('zufang')
 
-    parseHtml('https://bj.lianjia.com/zufang/pinggu/')
+    for url in base_url_list:
+        getPageUrl(url)
+
 
 if __name__ == '__main__':
     main()

@@ -17,9 +17,9 @@ class Outputer(object):
         self.datas.append(data)
 
     #json输出.
-    def json_output(self):
+    def json_output(self,filename):
         #'a' 以追加模式打开
-        fout=open('/Users/fiona/Desktop/TestData/lianjiadata.json','a',encoding='utf-8')
+        fout=open('/Users/fiona/Desktop/lianjiadata/%s.json' % filename,'a',encoding='utf-8')
         try:
             dataLines=[json.dumps(line,ensure_ascii=False)+'\n' for line in self.datas]
             fout.writelines(dataLines)
@@ -40,7 +40,16 @@ class Outputer(object):
             writer.writerows([data for data in dataLines])
         finally:
             csvFile.close()
-
+    #错误信息写入
+    def error_log_output(self,spider_type='zufang',url=None):
+        error_file=open('/Users/fiona/Desktop/lianjiadata/error.log','a')
+        try:
+            line='%s %s\n' %(spider_type,url)
+            error_file.write(line)
+        except:
+            print('error log  write error')
+        finally:
+            error_file.close()
 
 
 
