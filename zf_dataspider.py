@@ -42,36 +42,52 @@ user_agent=[{'User-Agent':'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.
     {'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'}]
 IPSet = set()
 IPlist=list()
-def getPageUrl(base_url,IPs):
+def getPageUrl(base_url):
 
+    IPs = getIPFromMysql()
+    while(len(IPs) == 0):
+        print("IP  is not enough please wait!!!!")
 
-    req = Request(base_url, headers=random.choice(user_agent))
-    print(random.choice(user_agent))
-    html = urlopen(req, timeout=10)
-    bsobg = BS(html.read(), "lxml")
+    IP = random.choice(IPs)
+    proxy = {'http': IP[0] + ':' + IP[1]}
+    ip_helper = getProxy()
+    if ip_helper.isAlive(IP[0], IP[1]):
+        proxy_support = ProxyHandler(proxy)
+        opener = build_opener(proxy_support)
+        install_opener(opener)
+        req = Request(base_url, headers=random.choice(user_agent))
+        html = urlopen(req, timeout=10)
+        bsobg = BS(html.read(), "lxml")
 
-    try:
-        page_div = bsobg.find("div", class_='page-box house-lst-page-box')
-        page_totalcount = eval(page_div['page-data'])['totalPage']
+        try:
+            page_div = bsobg.find("div", class_='page-box house-lst-page-box')
+            page_totalcount = eval(page_div['page-data'])['totalPage']
 
-        for page in list(range(1, page_totalcount + 1)):
-            if page != 1:
-                url = base_url + 'pg%d' % page
-                parseHtml(url,IPs)
-            else:
-                parseHtml(base_url,IPs)
-    except AttributeError :
-        print('parse page count error or this page has only one!!')
+            for page in list(range(1, page_totalcount + 1)):
+                if page != 1:
+                    url = base_url + 'pg%d' % page
+                    parseHtml(url)
+                else:
+                    parseHtml(base_url)
+        except AttributeError :
+            print('parse page count error or this page has only one!!')
+    else:
+        ip_helper.delete_ip(IP[0], IP[1])
+        IPs.remove((IP[0], IP[1]))
+        getPageUrl(base_url)
+        print("==========剩余%d 个IP===================" % len(IPs))
 
-
-def parseHtml(page_url,IPs):
+def parseHtml(page_url):
     output = Outputer()
+    IPs = getIPFromMysql()
+    while(len(IPs)==0):
+        print("IP  is not enough please wait!!!!")
+
     try:
         IP=random.choice(IPs)
         proxy = {'http': IP[0] + ':' + IP[1]}
         ip_helper=getProxy()
         if ip_helper.isAlive(IP[0],IP[1]):
-            print(proxy)
             # 使用这个方式是全局方法。
             proxy_support = ProxyHandler(proxy)
             opener = build_opener(proxy_support)
@@ -120,6 +136,12 @@ def parseHtml(page_url,IPs):
                 print(page_url + ':craw success!!')
             else:
                 print(page_url + ':this page is no data')
+        else:
+            ip_helper.delete_ip(IP[0],IP[1])
+            IPs.remove((IP[0],IP[1]))
+            print("==========剩余%d 个IP===================" % len(IPs))
+
+            parseHtml(page_url,IPlist)
     except(error.HTTPError,error.URLError) as  e:
         print(e)
         output.error_log_output(url=page_url)
@@ -149,10 +171,12 @@ def getIPFromMysql():
 def main():
     urls = url_manager.UrlManager()
     base_url_list = urls.get_url('zufang')
-    IPs = getIPFromMysql()
-    for url in base_url_list:
-        getPageUrl(url,IPs)
 
+    for url in base_url_list:
+        getPageUrl(url)
+
+def run():
+    main()
 
 if __name__ == '__main__':
      main()

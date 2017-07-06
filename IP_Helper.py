@@ -16,6 +16,8 @@ import   datetime
 from lxml import etree
 import time
 import mysql.connector
+from apscheduler.schedulers.blocking import BlockingScheduler
+
 class getProxy():
 
     def __init__(self):
@@ -38,14 +40,13 @@ class getProxy():
         #使用上面的方法可以不管网页怎么改，都可以抓到ip 和port
         for i in result_even:
             t1 = i.xpath("./td/text()")[:2]
-            print ("IP:%s\tPort:%s" % (t1[0], t1[1]))
             if self.isAlive(t1[0], t1[1]):
-
+                print("IP:%s\tPort:%s" % (t1[0], t1[1]))
                 self.insert_db(self.now,t1[0],t1[1])
         for i in result_odd:
             t2 = i.xpath("./td/text()")[:2]
-            print ("IP:%s\tPort:%s" % (t2[0], t2[1]))
             if self.isAlive(t2[0], t2[1]):
+                print("IP:%s\tPort:%s" % (t2[0], t2[1]))
                 self.insert_db(self.now,t2[0],t2[1])
 
 
@@ -94,14 +95,24 @@ class getProxy():
             resp=urlopen(req,timeout=10)
 
             if resp.code==200:
-                print ("work")
                 return True
             else:
-                print ("not work")
                 return False
         except :
-            print ("Not work")
             return False
+
+
+    def delete_ip(self,ip,port):
+        conn = mysql.connector.connect(user='root', password='123456', database=self.dbname)
+        cursor = conn.cursor()
+        delete_cmd = '''
+                        delete from PROXY where IP='%s'
+                        ''' % ip
+        print("delete IP %s in db" % ip)
+        cursor.execute(delete_cmd)
+        conn.commit()
+
+        cursor.close()
 
     #查看数据库里面的数据时候还有效，没有的话将其纪录删除
     def check_db_pool(self):
@@ -126,10 +137,20 @@ class getProxy():
         cursor.close()
 
 
+def run():
+    # sched = BlockingScheduler()
+    # sched.add_job(main, 'interval', =1)
+    # sched.start()
+     main()
+def main():
+    #now = datetime.datetime.now()
+    obj = getProxy()
+    obj.loop(5)
+
 if __name__ == "__main__":
     now = datetime.datetime.now()
     print ("Start at %s" % now)
     obj=getProxy()
     obj.loop(5)
-    obj.check_db_pool()
+    #obj.check_db_pool()
 
